@@ -25,7 +25,9 @@ def test_qimen(start_datetime, end_datetime):
         hour = current_datetime.hour
         minute = current_datetime.minute  # Keep it 0 for each hour
         try:
-            p = Qimen(year, month, day, hour, minute).pan(2)
+            #p = Qimen(year, month, day, hour, minute).pan(2)
+            p = Qimen(year, month, day, hour, minute).pan(3)
+            #print(p)
             print(f"Successfully executed for {current_datetime}")
         except Exception as e:
             print(f"Error at {current_datetime}: {e}")
@@ -106,8 +108,13 @@ class Qimen:
                                              self.month,
                                              self.day,
                                              self.hour,
+                                             self.minute)   
+        yinpan = config.qimen_ju_name_yinpan(self.year,
+                                             self.month,
+                                             self.day,
+                                             self.hour,
                                              self.minute)
-        qmju = {1:chaibu,2:zhirun}.get(option)
+        qmju = {1:chaibu,2:zhirun,3:yinpan}.get(option)
         return dict(zip(list(map(lambda x: dict(zip(config.cnumber, config.eight_gua)).get(x),
                          config.new_list(config.cnumber, qmju[2]))),
                         {"陽遁":list("戊己庚辛壬癸丁丙乙"),
@@ -140,7 +147,8 @@ class Qimen:
     def pan_sky(self, option):
         qmju = {
             1: config.qimen_ju_name_chaibu,
-            2: config.qimen_ju_name_zhirun
+            2: config.qimen_ju_name_zhirun,
+            3: config.qimen_ju_name_yinpan
         }.get(option)(self.year,
                       self.month,
                       self.day,
@@ -270,7 +278,7 @@ class Qimen:
         return d
 
     def pan(self, option):#1拆補 #2置閏
-        """時家奇門起盤綜合, option 1:拆補 2:置閏"""
+        """時家奇門起盤綜合, option 1:拆補 2:置閏 3:陰盤"""
         gz = config.gangzhi(self.year,
                             self.month,
                             self.day,
@@ -286,7 +294,12 @@ class Qimen:
                                               self.month,
                                               self.day,
                                               self.hour,
-                                              self.minute)}.get(option)
+                                              self.minute),
+                3:config.qimen_ju_name_yinpan(self.year,
+                                              self.month,
+                                              self.day,
+                                              self.hour,
+                                              self.minute)}.get(option) 
         shunhead = config.shun(gz[2])
         shunkong = config.daykong_shikong(self.year,
                                           self.month,
@@ -320,7 +333,7 @@ class Qimen:
                              self.minute,
                              option)
         return {
-            "排盤方式":{1:"拆補", 2:"置閏"}.get(option),
+            "排盤方式":{1:"拆補", 2:"置閏", 3:"陰盘"}.get(option),
             "干支": gzd,
             "旬首": shunhead,
             "旬空": shunkong,
@@ -392,7 +405,7 @@ class Qimen:
                                     self.minute,
                                     option)
         return {
-            "排盤方式":{1:"拆補", 2:"置閏"}.get(option),
+            "排盤方式":{1:"拆補", 2:"置閏", 3:"陰遁"}.get(option),
             "干支": gzd,
             "旬首": shunhead,
             "旬空": shunkong,
@@ -706,7 +719,7 @@ class Qimen:
         return 
     
     def overall(self, option):
-        """整體奇門起盤綜合, option 1:拆補 2:置閏"""
+        """整體奇門起盤綜合, option 1:拆補 2:置閏 3:陰盤"""
         return {"金函玉鏡(日家奇門)": self.gpan(),
                 "時家奇門": self.pan(option),
                 "刻家奇門":self.pan_minute(option)}
@@ -719,7 +732,9 @@ if __name__ == '__main__':
     #end_datetime = datetime(2024, 5, 30, 23, 0)  # Adjust as needed
     #print(test_qimen(start_datetime, end_datetime))
 
-    qtext1 = Qimen(2024,1,14,23,20).pan_minute(2)
+
+    #qtext1 = Qimen(2024,1,14,23,20).pan_minute(2)
+    qtext1 = Qimen(2025,8,23,22,0).pan(3)
     #qtext1 = Qimen(2024,7,11,18,0).jade_girl(2)
     #q = list("巽離坤震兌艮坎乾")
     #a = [qtext.get("天盤").get(i) for i in q]
