@@ -9,7 +9,7 @@ import re
 import math
 import datetime
 from itertools import cycle, repeat
-from sxtwl import fromSolar
+from sxtwl import fromLunar, fromSolar
 import ephem
 
 cnum = list("一二三四五六七八九十")
@@ -307,6 +307,43 @@ def find_shier_luck(gan):
     cslist = [dict(zip(y, cheungsunlist)) for y in nnlist]
     return {**dict(zip(tian_gan[0::2], cslist2)),
             **dict(zip(tian_gan[1::2], cslist))}.get(gan)
+
+def qimen_ju_name_yinpan(year, month, day, hour, minute):
+    """陰盤奇門局"""
+    # Step 1: Determine Yin or Yang Dun
+    yydun = {tuple(new_list(jieqi_name, "冬至")[0:12]):"陽遁",
+             tuple(new_list(jieqi_name, "夏至")[0:12]):"陰遁" }
+    jieqi = jq(year, month, day, hour, minute)
+    find_yingyang = multi_key_dict_get(yydun, jieqi)
+
+    # Step 2: Determine the Bureau Number using Yin Pan Method
+    day_gz = fromSolar(year, month, day)
+    solar_info = fromLunar(year, month, day)
+    #print("day_gz", day_gz)
+    #print("solar_info", solar_info)
+    
+    # Earthly Branch to Number mapping (Zi=1, Chou=2, etc.)
+    di_zhi_num_map = {branch: i + 1 for i, branch in enumerate(di_zhi)}
+
+    # Get year, month, day, hour components
+    year_branch_char = di_zhi[day_gz.getYearGZ().dz]
+    lunar_month = day_gz.getLunarMonth()
+    lunar_day = day_gz.getLunarDay()
+    hour_branch_char = di_zhi[day_gz.getHourGZ(hour).dz]
+
+    # Get corresponding numbers
+    year_branch_num = di_zhi_num_map.get(year_branch_char, 0)
+    hour_branch_num = di_zhi_num_map.get(hour_branch_char, 0)
+
+    # Calculate Bureau Number
+    total = year_branch_num + lunar_month + lunar_day + hour_branch_num
+    bureau_num = total % 9
+    if bureau_num == 0:
+        bureau_num = 9
+#print("{}{}局".format(find_yingyang, cnum[bureau_num-1]))
+    # The Yin Pan method doesn't use 上元, 中元, 下元, so we construct the name directly.
+    return "{}{}局".format(find_yingyang, cnum[bureau_num-1])
+
 #奇門排局拆補
 def qimen_ju_name_chaibu(year, month, day, hour, minute):
     yydun = {tuple(new_list(jieqi_name, "冬至")[0:12]):"陽遁",
@@ -580,7 +617,8 @@ def pan_earth_min_r(year, month, day, hour, minute):
 #排值符
 def zhifu_pai(year, month, day, hour, minute, option):
     qmju = {1:qimen_ju_name_chaibu(year, month, day, hour, minute),
-            2:qimen_ju_name_zhirun(year, month, day, hour, minute)}.get(option)
+            2:qimen_ju_name_zhirun(year, month, day, hour, minute),
+            3:qimen_ju_name_yinpan(year, month, day, hour, minute)}.get(option)    
     yinyang = qmju[0]
     kook =  qmju[2]
     pai = {"陽":{"一":"九八七一二三四五六",
@@ -638,7 +676,8 @@ def zhifu_pai_ke(year, month, day, hour, minute, option):
 #1拆補 #2置閏
 def zhishi_pai(year, month, day, hour, minute, option):
     qmju = {1:qimen_ju_name_chaibu(year, month, day, hour, minute),
-            2:qimen_ju_name_zhirun(year, month, day, hour, minute)}.get(option)
+            2:qimen_ju_name_zhirun(year, month, day, hour, minute),
+            3:qimen_ju_name_yinpan(year, month, day, hour, minute)}.get(option)
     yinyang = qmju[0]
     kook =  qmju[2]
     new_kook = new_list(cnumber, kook)
@@ -666,7 +705,8 @@ def zhishi_pai_ke(year, month, day, hour, minute, option):
 #八門
 def pan_door(year, month, day, hour, minute, option):
     qmju = {1:qimen_ju_name_chaibu(year, month, day, hour, minute),
-            2:qimen_ju_name_zhirun(year, month, day, hour, minute)}.get(option)
+            2:qimen_ju_name_zhirun(year, month, day, hour, minute),
+            3:qimen_ju_name_yinpan(year, month, day, hour, minute)}.get(option)
     zfnzs = zhifu_n_zhishi(year, month, day, hour, minute, option)
     starting_door = zfnzs.get("值使門宮")[0]
     starting_gong = zfnzs.get("值使門宮")[1]
@@ -697,7 +737,8 @@ def pan_door_minute(year, month, day, hour, minute, option):
 #九星
 def pan_star(year, month, day, hour, minute, option):
     qmju = {1:qimen_ju_name_chaibu(year, month, day, hour, minute),
-            2:qimen_ju_name_zhirun(year, month, day, hour, minute)}.get(option)
+            2:qimen_ju_name_zhirun(year, month, day, hour, minute),
+            3:qimen_ju_name_yinpan(year, month, day, hour, minute)}.get(option)
     zhifunzhishi = zhifu_n_zhishi(year, month, day, hour, minute, option)
     star_r = list("蓬任沖輔英禽柱心")
     starting_star = zhifunzhishi.get("值符星宮")[0].replace("芮", "禽")
@@ -731,7 +772,8 @@ def pan_star_minute(year, month, day, hour, minute, option):
 #八神
 def pan_god(year, month, day, hour, minute, option):
     qmju = {1:qimen_ju_name_chaibu(year, month, day, hour, minute),
-            2:qimen_ju_name_zhirun(year, month, day, hour, minute)}.get(option)
+            2:qimen_ju_name_zhirun(year, month, day, hour, minute),
+            3:qimen_ju_name_yinpan(year, month, day, hour, minute)}.get(option)
     zfzs = zhifu_n_zhishi(year, month, day, hour, minute, option)
     starting_gong = zfzs.get("值符星宮")[1]
     rotate = {"陽":clockwise_eightgua,
